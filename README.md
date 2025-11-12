@@ -1,0 +1,2 @@
+# Duckboard
+Duckdb Python Dashboard 
