@@ -7,6 +7,7 @@ from PySide6.QtGui import QFont
 import time
 
 from src.database.duckdb_manager import DuckDBManager
+from src.gui.sql_highlighter import SQLHighlighter
 
 class QueryEditor(QWidget):
     """sql query editor with history."""
@@ -39,6 +40,10 @@ class QueryEditor(QWidget):
         self.query_text.setPlaceholderText("Enter SQL query...")
         font = QFont("Courier New", 11)
         self.query_text.setFont(font)
+
+        # Apply SQL syntax highlighting
+        self.highlighter = SQLHighlighter(self.query_text.document())
+
         editor_layout.addWidget(self.query_text)
 
         #execute button
