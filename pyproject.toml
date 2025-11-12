@@ -1,0 +1,10 @@
+[project]
+name = "duckboard"
+version = "0.1.0"
+description = "Duckdb and python analytics dashboard"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.4.1",
+    "pyside6>=6.10.0",
+]

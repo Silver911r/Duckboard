@@ -2,6 +2,8 @@
 
 A desktop data analytics tool powered by DuckDB for fast, interactive analysis of CSV, Parquet, and Arrow files. Built with PySide6 to explore modern Qt capabilities while solving real data analysis friction points.
 
+![Duckboard Screenshot](images/sample%20query.png)
+
 ## Motivation
 
 I wanted to continue building with Qt/PySide6 while tackling something more directly useful - a lightweight alternative to tools like Azure Data Studio, but focused on local file analysis with the speed of DuckDB. This combines GUI development practice with the modern data stack (DuckDB, Arrow, Polars) for exploratory data analysis.
