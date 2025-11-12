@@ -23,7 +23,7 @@ class MainWindow(QMainWindow):
         self.db_manager = DuckDBManager()
 
         #apply theme
-        self._apply_dark_them()
+        self._apply_dark_theme()
 
         #setup ui
         self._init_ui()
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
             self.results_table.display_results(result)
 
             #update status bar
-            row_count = len(result.fethall())
+            row_count = len(result.fetchall())
             self.status_bar.showMessage(
                 f"Query executed successfully | {row_count} rows | {execution_time}s"
             )

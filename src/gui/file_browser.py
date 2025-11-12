@@ -52,7 +52,7 @@ class FileBrowser(QWidget):
             try:
                 table_name = self.db_manager.load_file(file_path)
                 self._refresh_tables_list()
-                self.parent().status_bar.showMessage(f"Loaded {table_name} from {Path(file_path).name}")
+                self.window().status_bar.showMessage(f"Loaded {table_name} from {Path(file_path).name}")
             except Exception as e:
                 QMessageBox.critical(self, "Error Loading File", str(e))
 

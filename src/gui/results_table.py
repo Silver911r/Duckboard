@@ -67,14 +67,14 @@ class ResultsTable(QWidget):
             for row_idx, row in enumerate(rows):
                 for col_idx, value in enumerate(row):
                     item = QTableWidgetItem(str(value))
-                    item.setFlags(item.flags() & ~Qt.ItemIsEdittable)
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.table.setItem(row_idx, col_idx, item)
 
             #resize colums to content
             self.table.resizeColumnsToContents()
 
             #update info
-            self.info_label.setText(f"{len(rows)} row(s), {len(columns)} colum(s)")
+            self.info_label.setText(f"{len(rows)} row(s), {len(columns)} column(s)")
             self.export_btn.setEnabled(True)
         
         except Exception as e:

@@ -16,7 +16,7 @@ class QueryEditor(QWidget):
         super().__init__(parent)
         self.db_manager = db_manager
         self.query_history = []
-        self.__init_ui()
+        self._init_ui()
 
     def _init_ui(self):
         "init the ui"

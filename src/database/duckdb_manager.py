@@ -12,7 +12,7 @@ class DuckDBManager:
         """
         self.db_path = db_path
         self.conn = duckdb.connect(db_path or ":memory")
-        self.loaded_tables: Dict[str, str] # table_name -> file_path
+        self.loaded_tables: Dict[str, str] = {} # table_name -> file_path
 
     def load_file(self, file_path: str, table_name: Optional[str] = None) -> str:
         """
