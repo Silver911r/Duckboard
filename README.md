@@ -1,5 +1,8 @@
 # Duckboard - Lightweight Data Analytics GUI
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+
 A desktop data analytics tool powered by DuckDB for fast, interactive analysis of CSV, Parquet, and Arrow files. Built with PySide6 to explore modern Qt capabilities while solving real data analysis friction points.
 
 ![Duckboard Screenshot](images/sample%20query.png)
@@ -48,3 +51,11 @@ Project scaffolding phase - building out the core GUI structure and DuckDB integ
 - Query templates for common analysis patterns
 - Parquet metadata inspection
 - Schema comparison across files
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
