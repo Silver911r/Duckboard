@@ -1,10 +1,28 @@
 [project]
 name = "duckboard"
 version = "0.1.0"
-description = "Duckdb and python analytics dashboard"
+description = "Lightweight data analytics GUI powered by DuckDB"
 readme = "README.md"
 requires-python = ">=3.12"
+license = {text = "MIT"}
+keywords = ["duckdb", "analytics", "gui", "data-analysis", "sql", "pyside6", "parquet", "csv"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering",
+]
+
 dependencies = [
     "duckdb>=1.4.1",
     "pyside6>=6.10.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Silver911r/Duckboard"
+Repository = "https://github.com/Silver911r/Duckboard"
+Issues = "https://github.com/Silver911r/Duckboard/issues"
