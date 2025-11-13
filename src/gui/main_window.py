@@ -104,10 +104,10 @@ class MainWindow(QMainWindow):
             #display results in table
             self.results_table.display_results(result)
 
-            #update status bar
-            row_count = len(result.fetchall())
+            #update status bar with row count from results table
+            row_count = self.results_table.full_result_count
             self.status_bar.showMessage(
-                f"Query executed successfully | {row_count} rows | {execution_time}s"
+                f"Query executed successfully | {row_count:,} rows | {execution_time:.3f}s"
             )
         except Exception as e:
             self.status_bar.showMessage(f"Error: {str(e)}")

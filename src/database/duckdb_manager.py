@@ -21,11 +21,22 @@ class DuckDBManager:
             file_path: path to file
             table_name: optional table name, use filename without extension if none
         returns:
-            the table name useduv
+            the table name used
         """
         path = Path(file_path)
         if not table_name:
-            table_name = path.stem.replace(" ", "_").replace("-","_")
+            # handle double extensions like .csv.gz
+            name = path.name
+            # remove .gz if present
+            if name.endswith('.gz'):
+                name = name[:-3]
+            # remove data file extensions
+            for ext in ['.csv', '.parquet', '.arrow']:
+                if name.endswith(ext):
+                    name = name[:-len(ext)]
+                    break
+            # sanitize name
+            table_name = name.replace(" ", "_").replace("-","_")
 
         # create a view for easier naming and schema
         suffix = path.suffix.lower()

@@ -6,10 +6,12 @@ from PySide6.QtCore import Qt
 
 class ResultsTable(QWidget):
     """table widge for displaying query results"""
+    MAX_DISPLAY_ROWS = 10000  # limit display to prevent UI freeze
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.current_results = None
+        self.full_result_count = 0
         self._init_ui()
 
     def _init_ui(self):
@@ -54,17 +56,32 @@ class ResultsTable(QWidget):
             rows = result.fetchall()
             columns = [desc[0] for desc in result.description]
 
-            #store for export
+            #store for export (all rows)
             self.current_results = (rows, columns)
+            self.full_result_count = len(rows)
+
+            #limit displayed rows to prevent UI freeze
+            display_rows = rows[:self.MAX_DISPLAY_ROWS]
+            truncated = len(rows) > self.MAX_DISPLAY_ROWS
+
+            #show warning if truncated
+            if truncated:
+                QMessageBox.warning(
+                    self,
+                    "Large Result Set",
+                    f"Query returned {len(rows):,} rows.\n\n"
+                    f"Displaying first {self.MAX_DISPLAY_ROWS:,} rows to prevent UI freeze.\n\n"
+                    f"Use 'Export Results' to save all {len(rows):,} rows."
+                )
 
             #update the table
             self.table.clear()
-            self.table.setRowCount(len(rows))
+            self.table.setRowCount(len(display_rows))
             self.table.setColumnCount(len(columns))
             self.table.setHorizontalHeaderLabels(columns)
 
-            #populate table
-            for row_idx, row in enumerate(rows):
+            #populate table (limited rows)
+            for row_idx, row in enumerate(display_rows):
                 for col_idx, value in enumerate(row):
                     item = QTableWidgetItem(str(value))
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -74,9 +91,15 @@ class ResultsTable(QWidget):
             self.table.resizeColumnsToContents()
 
             #update info
-            self.info_label.setText(f"{len(rows)} row(s), {len(columns)} column(s)")
+            if truncated:
+                self.info_label.setText(
+                    f"Showing {len(display_rows):,} of {len(rows):,} row(s), {len(columns)} column(s)"
+                )
+            else:
+                self.info_label.setText(f"{len(rows):,} row(s), {len(columns)} column(s)")
+
             self.export_btn.setEnabled(True)
-        
+
         except Exception as e:
             self.info_label.setText(f"Error displaying results: {str(e)}")
             self.export_btn.setEnabled(False)

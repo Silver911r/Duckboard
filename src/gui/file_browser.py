@@ -2,16 +2,36 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QPushButton,
     QFileDialog, QLabel, QListWidgetItem, QMessageBox, QInputDialog
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
 from pathlib import Path
 
 from src.database.duckdb_manager import DuckDBManager
+
+class FileLoaderThread(QThread):
+    """background thread for loading files without blocking UI"""
+    finished = Signal(str)  # table_name
+    error = Signal(str)  # error message
+
+    def __init__(self, db_manager, file_path, table_name):
+        super().__init__()
+        self.db_manager = db_manager
+        self.file_path = file_path
+        self.table_name = table_name
+
+    def run(self):
+        """load file in background"""
+        try:
+            table_name = self.db_manager.load_file(self.file_path, self.table_name)
+            self.finished.emit(table_name)
+        except Exception as e:
+            self.error.emit(str(e))
 
 class FileBrowser(QWidget):
     """panel for browsing and loading data"""
     def __init__(self, db_manager: DuckDBManager, parent=None):
         super().__init__(parent)
         self.db_manager = db_manager
+        self.loader_thread = None
         self._init_ui()
     
     def _init_ui(self):
@@ -51,7 +71,18 @@ class FileBrowser(QWidget):
         if file_path:
             # generate default table name from filename
             path = Path(file_path)
-            default_name = path.stem.replace(" ", "_").replace("-", "_")
+            # handle double extensions like .csv.gz
+            name = path.name
+            # remove .gz if present
+            if name.endswith('.gz'):
+                name = name[:-3]
+            # remove data file extensions
+            for ext in ['.csv', '.parquet', '.arrow']:
+                if name.endswith(ext):
+                    name = name[:-len(ext)]
+                    break
+            # sanitize name
+            default_name = name.replace(" ", "_").replace("-", "_")
 
             # prompt user for table name
             table_name, ok = QInputDialog.getText(
@@ -62,12 +93,29 @@ class FileBrowser(QWidget):
             )
 
             if ok and table_name:
-                try:
-                    table_name = self.db_manager.load_file(file_path, table_name)
-                    self._refresh_tables_list()
-                    self.window().status_bar.showMessage(f"Loaded {table_name} from {Path(file_path).name}")
-                except Exception as e:
-                    QMessageBox.critical(self, "Error Loading File", str(e))
+                # disable button during loading
+                self.add_file_btn.setEnabled(False)
+                self.window().status_bar.showMessage(f"Loading {Path(file_path).name}...")
+
+                # load file in background thread
+                self.loader_thread = FileLoaderThread(self.db_manager, file_path, table_name)
+                self.loader_thread.finished.connect(self._on_file_loaded)
+                self.loader_thread.error.connect(self._on_load_error)
+                self.loader_thread.start()
+
+    def _on_file_loaded(self, table_name):
+        """handle successful file load"""
+        self._refresh_tables_list()
+        self.window().status_bar.showMessage(f"Loaded {table_name}")
+        self.add_file_btn.setEnabled(True)
+        self.loader_thread = None
+
+    def _on_load_error(self, error_msg):
+        """handle file load error"""
+        QMessageBox.critical(self, "Error Loading File", error_msg)
+        self.window().status_bar.showMessage("Load failed")
+        self.add_file_btn.setEnabled(True)
+        self.loader_thread = None
 
     def _refresh_tables_list(self):
         """refresh the list of tables"""

@@ -49,6 +49,7 @@ Thumbs.db
 # *.csv
 # *.parquet
 # *.arrow
+test_imports
 
 # Workspaces
 *.workspace.json

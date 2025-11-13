@@ -2,11 +2,31 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QTextEdit, QPushButton,
     QLabel, QListWidget, QSplitter, QMessageBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont
 import time
 
 from src.database.duckdb_manager import DuckDBManager
+
+class QueryExecutorThread(QThread):
+    """background thread for executing queries without blocking UI"""
+    finished = Signal(object, float)  # result, execution_time
+    error = Signal(str)  # error message
+
+    def __init__(self, db_manager, query):
+        super().__init__()
+        self.db_manager = db_manager
+        self.query = query
+
+    def run(self):
+        """execute query in background"""
+        try:
+            start_time = time.time()
+            result = self.db_manager.execute_query(self.query)
+            execution_time = time.time() - start_time
+            self.finished.emit(result, execution_time)
+        except Exception as e:
+            self.error.emit(str(e))
 
 class QueryEditor(QWidget):
     """sql query editor with history."""
@@ -16,6 +36,7 @@ class QueryEditor(QWidget):
         super().__init__(parent)
         self.db_manager = db_manager
         self.query_history = []
+        self.query_thread = None
         self._init_ui()
 
     def _init_ui(self):
@@ -90,20 +111,42 @@ class QueryEditor(QWidget):
         if not query:
             QMessageBox.warning(self, "No Query", "Please enter a SQL query.")
             return
-        
-        try:
-            start_time = time.time()
-            result = self.db_manager.execute_query(query)
-            execution_time = time.time() - start_time
 
-            #add to hstory
-            self.query_history.append(query)
-            self.history_list.addItem(f"{query[:50]}..." if len(query) > 50 else query)
+        # disable button during execution
+        self.execute_btn.setEnabled(False)
+        self.execute_btn.setText("Executing...")
+        self.window().status_bar.showMessage("Executing query...")
 
-            #emit sig with results
-            self.query_executed.emit(result, execution_time)
-        except Exception as e:
-            QMessageBox.critical(self, "Query error", f"Error executing query:\n\n{str(e)}")
+        # store query for history (add after successful execution)
+        self.current_query = query
+
+        # execute query in background thread
+        self.query_thread = QueryExecutorThread(self.db_manager, query)
+        self.query_thread.finished.connect(self._on_query_finished)
+        self.query_thread.error.connect(self._on_query_error)
+        self.query_thread.start()
+
+    def _on_query_finished(self, result, execution_time):
+        """handle successful query execution"""
+        # add to history
+        self.query_history.append(self.current_query)
+        self.history_list.addItem(f"{self.current_query[:50]}..." if len(self.current_query) > 50 else self.current_query)
+
+        # emit signal with results
+        self.query_executed.emit(result, execution_time)
+
+        # re-enable button
+        self.execute_btn.setEnabled(True)
+        self.execute_btn.setText("Execute Query")
+        self.query_thread = None
+
+    def _on_query_error(self, error_msg):
+        """handle query execution error"""
+        QMessageBox.critical(self, "Query error", f"Error executing query:\n\n{error_msg}")
+        self.window().status_bar.showMessage("Query failed")
+        self.execute_btn.setEnabled(True)
+        self.execute_btn.setText("Execute Query")
+        self.query_thread = None
 
     def _load_query_from_history(self, item):
         """load a query from history into the editor"""
