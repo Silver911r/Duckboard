@@ -75,7 +75,7 @@ class DuckDBManager:
         returns:
             dictionary with row count and column count
         """
-        row_count = self.conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
+        row_count = self.conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
         schema = self.get_table_schema(table_name)
 
         return {
