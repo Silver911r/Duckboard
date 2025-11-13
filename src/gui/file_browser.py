@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QPushButton,
-    QFileDialog, QLabel, QListWidgetItem, QMessageBox
+    QFileDialog, QLabel, QListWidgetItem, QMessageBox, QInputDialog
 )
 from PySide6.QtCore import Qt
 from pathlib import Path
@@ -49,12 +49,25 @@ class FileBrowser(QWidget):
         )
 
         if file_path:
-            try:
-                table_name = self.db_manager.load_file(file_path)
-                self._refresh_tables_list()
-                self.window().status_bar.showMessage(f"Loaded {table_name} from {Path(file_path).name}")
-            except Exception as e:
-                QMessageBox.critical(self, "Error Loading File", str(e))
+            # generate default table name from filename
+            path = Path(file_path)
+            default_name = path.stem.replace(" ", "_").replace("-", "_")
+
+            # prompt user for table name
+            table_name, ok = QInputDialog.getText(
+                self,
+                "Table Name",
+                "Enter a name for this table:",
+                text=default_name
+            )
+
+            if ok and table_name:
+                try:
+                    table_name = self.db_manager.load_file(file_path, table_name)
+                    self._refresh_tables_list()
+                    self.window().status_bar.showMessage(f"Loaded {table_name} from {Path(file_path).name}")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error Loading File", str(e))
 
     def _refresh_tables_list(self):
         """refresh the list of tables"""
