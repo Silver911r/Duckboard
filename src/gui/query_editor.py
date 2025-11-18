@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QTextEdit, QPushButton,
-    QLabel, QListWidget, QSplitter, QMessageBox
+    QLabel, QListWidget, QSplitter, QMessageBox,
+    QHBoxLayout
 )
 from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont
@@ -36,6 +37,7 @@ class QueryEditor(QWidget):
         super().__init__(parent)
         self.db_manager = db_manager
         self.query_history = []
+        self.current_font_size = 11
         self.query_thread = None
         self._init_ui()
 
@@ -54,6 +56,24 @@ class QueryEditor(QWidget):
         title = QLabel("SQL Query Editor")
         title.setStyleSheet("font-size: 14px; font-weight: bold; padding: 5px;")
         editor_layout.addWidget(title)
+
+        #font size controls
+        font_controls_layout = QHBoxLayout()
+        font_controls_layout.addStretch()
+
+        self.decrease_font_btn = QPushButton("A-")
+        self.decrease_font_btn.setFixedWidth(40)
+        self.decrease_font_btn.setToolTip("Decrease font size")
+        font_controls_layout.addWidget(self.decrease_font_btn)
+        self.decrease_font_btn.clicked.connect(self._decrease_font_size)
+
+        self.increase_font_btn = QPushButton("A+")
+        self.increase_font_btn.setFixedWidth(40)
+        self.increase_font_btn.setToolTip("Increase font size")
+        font_controls_layout.addWidget(self.increase_font_btn)
+        self.increase_font_btn.clicked.connect(self._increase_font_size)
+
+        editor_layout.addLayout(font_controls_layout)
 
         #query text area
         self.query_text = QTextEdit()
@@ -153,3 +173,20 @@ class QueryEditor(QWidget):
         index = self.history_list.row(item)
         if 0 <= index < len(self.query_history):
             self.query_text.setPlainText(self.query_history[index])
+
+    def _increase_font_size(self):
+        """increase the sql editor font size"""
+        if self.current_font_size < 24:
+            self.current_font_size += 2
+            self._update_editor_font()
+
+    def _decrease_font_size(self):
+        """decrease the sql editor font size"""
+        if self.current_font_size > 8:
+            self.current_font_size -= 2
+            self._update_editor_font()
+
+    def _update_editor_font(self):
+        """apply the current font size to the editor"""
+        font = QFont("Courier New", self.current_font_size)
+        self.query_text.setFont(font)
