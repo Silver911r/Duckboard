@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+![DuckDB](https://img.shields.io/badge/duckdb-1.4.1-green)
 
 A desktop data analytics tool powered by DuckDB for fast, interactive analysis of CSV, Parquet, and Arrow files. Built with PySide6 to explore modern Qt capabilities while solving real data analysis friction points.
 

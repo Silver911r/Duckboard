@@ -23,30 +23,46 @@ class DuckDBManager:
         returns:
             the table name used
         """
-        path = Path(file_path)
+        #check if url
+        is_url = file_path.startswith('http://') or file_path.startswith('https://')
+
         if not table_name:
-            # handle double extensions like .csv.gz
-            name = path.name
-            # remove .gz if present
-            if name.endswith('.gz'):
-                name = name[:-3]
-            # remove data file extensions
-            for ext in ['.csv', '.parquet', '.arrow']:
-                if name.endswith(ext):
-                    name = name[:-len(ext)]
-                    break
-            # sanitize name
-            table_name = name.replace(" ", "_").replace("-","_")
+            if is_url:
+                #for urls, use "url_data" or extract from url path
+                default_name = "url_data"
+            else:
+                # handle double extensions like .csv.gz
+                name = path.name
+                # remove .gz if present
+                if name.endswith('.gz'):
+                    name = name[:-3]
+                # remove data file extensions
+                for ext in ['.csv', '.parquet', '.arrow']:
+                    if name.endswith(ext):
+                        name = name[:-len(ext)]
+                        break
+                # sanitize name
+                default_name = name.replace(" ", "_").replace("-","_")
+        
+        #determin file type
+        if is_url:
+            #for url assume csv
+            suffix = ".csv"
+        else:
+            path = Path(file_path)
+            suffix = path.suffix.lower()
+
+
+        #choose talbe for url or view for local
+        create_type = "TABLE" # always use table for speed, will add memory effienct view later
 
         # create a view for easier naming and schema
-        suffix = path.suffix.lower()
-
         if suffix == ".csv" or suffix == ".gz":
-            query = f"CREATE OR REPLACE VIEW {table_name} AS SELECT * FROM read_csv_auto('{file_path}')"
+            query = f"CREATE OR REPLACE {create_type} {table_name} AS SELECT * FROM read_csv_auto('{file_path}')"
         elif suffix == ".parquet":
-            query = f"CREATE OR REPLACE VIEW {table_name} AS SELECT * FROM read_parquet('{file_path}')"
+            query = f"CREATE OR REPLACE {create_type} {table_name} AS SELECT * FROM read_parquet('{file_path}')"
         elif suffix == ".arrow":
-            query = f"CREATE OR REPLACE VIEW {table_name} AS SELECT * FROM read_arrow('{file_path}')"
+            query = f"CREATE OR REPLACE {create_type} {table_name} AS SELECT * FROM read_arrow('{file_path}')"
         else:
             raise ValueError(f"Unsupported file type: {suffix}")
 

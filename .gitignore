@@ -19,6 +19,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.pyc
+
+# Ai
+Claude.md
 
 # Virtual environments
 venv/
@@ -54,7 +58,13 @@ test_imports
 # Workspaces
 *.workspace.json
 
+# Secrets
+.env
+
 .claude
 .python-version
 :memory
 :memory.wal
+
+app.db
+~/.duckboard
