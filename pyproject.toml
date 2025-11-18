@@ -17,6 +17,9 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 
+[tool.pyright]
+reportAttributeAccessIssue = false
+
 dependencies = [
     "duckdb>=1.4.1",
     "pyside6>=6.10.0",
