@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor
 
+from src.database.state_manager import StateManager
 from src.database.duckdb_manager import DuckDBManager
 from src.gui.file_browser import FileBrowser
 from src.gui.query_editor import QueryEditor
@@ -19,7 +20,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Duckboard - Data Analytics")
         self.setGeometry(100, 100, 1400, 800)
 
-        #initalize db manager
+        #initialize state manager
+        self.state_manager = StateManager()
+
+        #initialize db manager
         self.db_manager = DuckDBManager()
 
         #apply theme
@@ -73,7 +77,7 @@ class MainWindow(QMainWindow):
         #center area - for query and dashboard
         self.tab_widget = QTabWidget()
 
-        self.query_editor = QueryEditor(self.db_manager, self)
+        self.query_editor = QueryEditor(self.db_manager, self.state_manager, self)
         self.dashboard_view = DashboardView(self)
 
         self.tab_widget.addTab(self.query_editor, "SQL Query")
@@ -115,4 +119,5 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """handle application close"""
         self.db_manager.close()
+        self.state_manager.close()
         event.accept()

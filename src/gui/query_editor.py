@@ -33,11 +33,12 @@ class QueryEditor(QWidget):
     """sql query editor with history."""
     query_executed = Signal(object, float) # result, execution_time
 
-    def __init__(self, db_manager: DuckDBManager, parent=None):
+    def __init__(self, db_manager: DuckDBManager, state_manager, parent=None):
         super().__init__(parent)
+        self.state_manager = state_manager
         self.db_manager = db_manager
         self.query_history = []
-        self.current_font_size = 11
+        self.current_font_size = self.state_manager.get_setting_int('sql_editor_font_size', 11)
         self.query_thread = None
         self._init_ui()
 
@@ -78,7 +79,7 @@ class QueryEditor(QWidget):
         #query text area
         self.query_text = QTextEdit()
         self.query_text.setPlaceholderText("Enter SQL query...")
-        font = QFont("Courier New", 11)
+        font = QFont("Courier New", self.current_font_size)
         self.query_text.setFont(font)
         editor_layout.addWidget(self.query_text)
 
@@ -188,5 +189,6 @@ class QueryEditor(QWidget):
 
     def _update_editor_font(self):
         """apply the current font size to the editor"""
+        self.state_manager.set_setting('sql_editor_font_size', self.current_font_size)
         font = QFont("Courier New", self.current_font_size)
         self.query_text.setFont(font)
