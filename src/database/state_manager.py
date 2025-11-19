@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, List, Any
 from datetime import datetime
 
 class StateManager:
@@ -97,6 +97,55 @@ class StateManager:
         """retrieve an integer setting"""
         value = self.get_setting(key)
         return int(value) if value is not None else default
+    
+    #data source methods
+    def add_data_source(self, workspace_id: int, table_name: str, source_path: str, source_type: str):
+        """add data source to the database"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO data_sources
+            (workspace_id, table_name, source_path, source_type, added_at)
+            VALUES (?,?,?,?,?)
+        """, (workspace_id, table_name, source_path, source_type, datetime.now())
+        )
+        self.conn.commit()
+
+    def get_data_sources(self, workspace_id: int) -> list:
+        """get all data sources for a workspace"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT table_name, source_path, source_type, added_at
+            FROM data_sources
+            WHERE workspace_id = ?
+            ORDER BY added_at DESC
+        """, (workspace_id,))
+        return cursor.fetchall()
+    
+    def remove_data_sources(self, workspace_id: int, table_name: str):
+        """remove a data source from the database"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            DELETE FROM data_sources
+            WHERE workspace_id = ? AND table_name = ?
+        """, (workspace_id, table_name))
+        self.conn.commit()
+
+    def ensure_default_workspace(self) -> int:
+        """ensure a default workspace exists and return its ID"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id FROM workspaces WHERE name = 'Default'")
+        row = cursor.fetchone()
+
+        if row:
+            return row['id']
+
+        #otherwise create default
+        cursor.execute("""
+            INSERT INTO workspaces (name, is_active)
+            VALUES ('Default', 1)
+        """)
+        self.conn.commit()
+        return cursor.lastrowid
     
     def close(self):
         """close the database connection"""

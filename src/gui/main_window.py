@@ -23,6 +23,9 @@ class MainWindow(QMainWindow):
         #initialize state manager
         self.state_manager = StateManager()
 
+        #initialize workspace
+        self.workspace_id = self.state_manager.ensure_default_workspace()
+
         #initialize db manager
         self.db_manager = DuckDBManager()
 
@@ -68,7 +71,7 @@ class MainWindow(QMainWindow):
         main_splitter = QSplitter(Qt.Horizontal)
 
         #left panel - file browser
-        self.file_browser = FileBrowser(self.db_manager, self)
+        self.file_browser = FileBrowser(self.db_manager, self.state_manager, self.workspace_id, self)
         main_splitter.addWidget(self.file_browser)
 
         #center/right area splitter

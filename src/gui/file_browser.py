@@ -29,11 +29,14 @@ class FileLoaderThread(QThread):
 
 class FileBrowser(QWidget):
     """panel for browsing and loading data"""
-    def __init__(self, db_manager: DuckDBManager, parent=None):
+    def __init__(self, db_manager: DuckDBManager, state_manager, workspace_id: int, parent=None):
         super().__init__(parent)
         self.db_manager = db_manager
+        self.state_manager = state_manager
+        self.workspace_id = workspace_id
         self.loader_thread = None
         self._init_ui()
+        self._load_saved_data_sources()
     
     def _init_ui(self):
         """init the ui"""
@@ -154,6 +157,11 @@ class FileBrowser(QWidget):
 
     def _on_file_loaded(self, table_name):
         """handle successful file load"""
+        #save to state db
+        source_path = self.db_manager.loaded_tables.get(table_name, '')
+        source_type = 'url' if source_path.startswith('http') else 'file'
+        self.state_manager.add_data_source(self.workspace_id, table_name, source_path, source_type)
+
         self._refresh_tables_list()
         self.window().status_bar.showMessage(f"Loaded {table_name}")
         self.add_data_btn.setEnabled(True)
@@ -200,3 +208,54 @@ class FileBrowser(QWidget):
             QMessageBox.information(self, f"Table Info: {table_name}", info_text)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not retrieve table info: {str(e)}")
+
+    def _load_saved_data_sources(self):
+        """load previously saved data sources from database"""
+        try:
+            data_sources = self.state_manager.get_data_sources(self.workspace_id)
+            self.pending_sources = []
+
+            for source in data_sources:
+                table_name = source['table_name']
+                source_path = source['source_path']
+                source_type = source['source_type']
+
+                #load the data source in background
+                self.add_data_btn.setEnabled(False)
+                if self.window() and hasattr(self.window(), 'status_bar'):
+                    self.window().status_bar.showMessage(f"Loading saved source: {table_name}...")
+
+                loader_thread = FileLoaderThread(self.db_manager, source_path, table_name)
+                loader_thread.finished.connect(self._on_saved_source_loaded)
+                loader_thread.error.connect(self._on_saved_source_error)
+                self.pending_sources.append(loader_thread)
+                loader_thread.start()
+
+        except Exception as e:
+            print(f"Error loading saved data sources: {e}")
+
+    def _on_saved_source_loaded(self, table_name):
+        """handle successful load of a saved data source"""
+        self._refresh_tables_list()
+        if self.window() and hasattr(self.window(), 'status_bar'):
+            self.window().status_bar.showMessage(f"Loaded saved source: {table_name}")
+
+        #check if all sources loaded
+        if hasattr(self, 'pending_sources'):
+            self.pending_sources = [t for t in self.pending_sources if t.isRunning()]
+            if not self.pending_sources:
+                self.add_data_btn.setEnabled(True)
+                if self.window() and hasattr(self.window(), 'status_bar'):
+                    self.window().status_bar.showMessage("Ready")
+
+    def _on_saved_source_error(self, error_msg):
+        """handle error loading saved data source"""
+        print(f"Error loading saved source: {error_msg}")
+
+        #check if all sources loaded
+        if hasattr(self, 'pending_sources'):
+            self.pending_sources = [t for t in self.pending_sources if t.isRunning()]
+            if not self.pending_sources:
+                self.add_data_btn.setEnabled(True)
+                if self.window() and hasattr(self.window(), 'status_bar'):
+                    self.window().status_bar.showMessage("Ready")
